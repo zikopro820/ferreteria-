@@ -86,6 +86,7 @@ function productCard(p) {
       ${stockHTML(p)}
       <div class="qty"><button class="q-minus" aria-label="Menos">−</button><span class="q-val">1</span><button class="q-plus" aria-label="Más">+</button></div>
       <button class="btn btn-yellow btn-block add"${hayStock(p) ? "" : " disabled"}>${icon("cart")} Agregar al carrito</button>
+      <button class="btn btn-dark btn-block buy"${hayStock(p) ? "" : " disabled"}>${icon("bolt")} Comprar ahora</button>
     </article>`;
 }
 function renderGrid(el, list) {
@@ -98,7 +99,16 @@ document.addEventListener("click", e => {
   if (e.target.closest(".q-minus")) val.textContent = Math.max(1, +val.textContent - 1);
   if (e.target.closest(".q-plus")) val.textContent = Math.min(+val.textContent + 1, p ? maxStock(p) : 999);
   if (e.target.closest(".add")) { addToCart(card.dataset.id, +val.textContent); val.textContent = 1; }
+  if (e.target.closest(".buy")) comprarAhora(card.dataset.id, +val.textContent);
 });
+/* Comprar ahora: deja el producto con la cantidad elegida y lleva directo al carrito */
+function comprarAhora(id, qty = 1) {
+  const p = getProd(id); if (!p || !hayStock(p)) return;
+  const cart = readCart(), it = cart.find(i => String(i.id) === String(id)), q = Math.max(1, Math.min(qty, maxStock(p)));
+  if (it) it.qty = Math.max(it.qty, q); else cart.push({ id: String(id), qty: q });
+  memoryCart = cart; try { localStorage.setItem("ferre_cart", JSON.stringify(cart)); } catch (e) {}
+  location.href = "carrito";
+}
 
 /* ---------- Mini carrito y contador ---------- */
 function refreshCartUI() {
@@ -193,7 +203,9 @@ function paginas() {
     const p = getProd(params.get("id")) || PRODUCTOS[0]; if (!p) return;
     let qty = 1; document.title = p.nombre + " | " + TIENDA(); $("#crumbName").textContent = p.nombre;
     pdp.innerHTML = `
-      <div class="pdp-img">${badgeHTML(p, "left")}<img src="${esc(foto(p, 1100))}" alt="${esc(p.nombre)}" onerror="this.style.display='none'"></div>
+      <div class="pdp-gal"><div class="pdp-img" id="galMain" title="Ver en grande">${badgeHTML(p, "left")}<img id="galImg" src="${esc(foto(p, 1100))}" alt="${esc(p.nombre)}" onerror="this.style.visibility='hidden'">
+        <button class="gal-nav prev" id="galPrev" aria-label="Foto anterior" hidden>‹</button><button class="gal-nav next" id="galNext" aria-label="Foto siguiente" hidden>›</button><span class="gal-count" id="galCount" hidden></span></div>
+        <div class="pdp-thumbs" id="galThumbs"></div></div>
       <div>
         <a class="pdp-cat" href="productos?cat=${encodeURIComponent(p.cat)}">${esc((CATEGORIAS[p.cat] || {}).nombre || "")}</a>
         <h1>${esc(p.nombre)}</h1>
@@ -204,6 +216,7 @@ function paginas() {
         ${(p.specs || []).length ? `<ul class="specs">${p.specs.map(s => `<li>${esc(s)}</li>`).join("")}</ul>` : ""}
         <div class="buy-row"><div class="qty"><button id="pMinus" aria-label="Menos">−</button><span id="pQty">1</span><button id="pPlus" aria-label="Más">+</button></div>
           <button class="btn btn-yellow" id="pAdd"${hayStock(p) ? "" : " disabled"}>${icon("cart")} Agregar al carrito</button></div>
+        <button class="btn btn-dark btn-block pdp-buy" id="pBuy"${hayStock(p) ? "" : " disabled"}>${icon("bolt")} Comprar ahora</button>
         <a class="btn btn-green btn-block" id="pWa" target="_blank" rel="noopener">Consultar por WhatsApp</a>
         <div class="pdp-info-list">
           <div>${icon("truck")}Envío a domicilio${AJ.envioGratisDesde ? ` · gratis desde ${soles(AJ.envioGratisDesde)}` : ""}${AJ.recojo !== false ? " · Recojo en tienda gratis" : ""}</div>
@@ -216,8 +229,36 @@ function paginas() {
     $("#pMinus").addEventListener("click", () => { qty = Math.max(1, qty - 1); $("#pQty").textContent = qty; wa(); });
     $("#pPlus").addEventListener("click", () => { qty = Math.min(qty + 1, maxStock(p)); $("#pQty").textContent = qty; wa(); });
     $("#pAdd").addEventListener("click", () => addToCart(p.id, qty));
+    $("#pBuy").addEventListener("click", () => comprarAhora(p.id, qty));
+    galeria(p);
     renderGrid($("#related"), PRODUCTOS.filter(x => x.cat === p.cat && x.id !== p.id).concat(PRODUCTOS.filter(x => x.cat !== p.cat && x.id !== p.id)).slice(0, 4));
   }
+}
+
+/* ---------- Galería de fotos del producto (hasta 4) ---------- */
+async function galeria(p) {
+  let l = [foto(p, 1100), ...(await DB.fotosProducto(p.id))].filter(Boolean), i = 0;
+  if (l.length < 2) { $("#galThumbs").hidden = true; return; }
+  l = l.slice(0, 4);
+  const pintar = () => { $("#galImg").src = l[i]; $("#galImg").style.visibility = ""; $("#galCount").textContent = `${i + 1} / ${l.length}`; $$("#galThumbs button").forEach((b, k) => b.classList.toggle("on", k === i)); };
+  $("#galThumbs").innerHTML = l.map((f, k) => `<button type="button" aria-label="Foto ${k + 1}"><img src="${esc(f)}" alt="" loading="lazy"></button>`).join("");
+  ["galPrev", "galNext", "galCount"].forEach(x => $("#" + x).hidden = false); pintar();
+  const mover = d => { i = (i + d + l.length) % l.length; pintar(); };
+  $("#galThumbs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { i = [...b.parentNode.children].indexOf(b); pintar(); } });
+  $("#galPrev").addEventListener("click", e => { e.stopPropagation(); mover(-1); }); $("#galNext").addEventListener("click", e => { e.stopPropagation(); mover(1); });
+  let x0 = null; const M = $("#galMain");
+  M.addEventListener("touchstart", e => x0 = e.touches[0].clientX, { passive: true });
+  M.addEventListener("touchend", e => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) mover(dx < 0 ? 1 : -1); x0 = null; });
+  M.addEventListener("click", () => {   // pantalla completa
+    const g = document.createElement("div"); g.className = "lightbox"; g.setAttribute("role", "dialog"); g.setAttribute("aria-modal", "true");
+    const dib = () => g.innerHTML = `<button class="lb-x" aria-label="Cerrar">✕</button><img src="${esc(l[i])}" alt="${esc(p.nombre)}"><button class="lb-p" aria-label="Anterior">‹</button><button class="lb-n" aria-label="Siguiente">›</button><span class="lb-c">${i + 1} / ${l.length}</span>`;
+    dib(); document.body.appendChild(g); document.body.style.overflow = "hidden";
+    const cerrar = () => { g.remove(); document.body.style.overflow = ""; document.removeEventListener("keydown", kd); pintar(); };
+    const kd = e => { if (e.key === "Escape") cerrar(); if (e.key === "ArrowRight") { i = (i + 1) % l.length; dib(); } if (e.key === "ArrowLeft") { i = (i - 1 + l.length) % l.length; dib(); } };
+    document.addEventListener("keydown", kd);
+    g.addEventListener("click", e => { if (e.target === g || e.target.closest(".lb-x")) return cerrar(); if (e.target.closest(".lb-n")) { i = (i + 1) % l.length; dib(); } if (e.target.closest(".lb-p")) { i = (i - 1 + l.length) % l.length; dib(); } });
+    let t0 = null; g.addEventListener("touchstart", e => t0 = e.touches[0].clientX, { passive: true }); g.addEventListener("touchend", e => { if (t0 == null) return; const dx = e.changedTouches[0].clientX - t0; if (Math.abs(dx) > 40) { i = (i + (dx < 0 ? 1 : -1) + l.length) % l.length; dib(); } t0 = null; });
+  });
 }
 
 /* ---------- Carrito y pago ---------- */

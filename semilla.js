@@ -27,6 +27,8 @@ window.FR_SEMILLA = function () {
   const FOTOS_CAT = { electricas: "1606676539940-12768ce0e762", pinturas: "1562259949-e8e7689d7828", construccion: "1637241612956-b7309005288b", seguridad: "1662309376159-b95fb193d96b" };
   Object.entries(typeof CATEGORIAS_EJEMPLO !== "undefined" ? CATEGORIAS_EJEMPLO : {}).forEach(([k, c], i) => db.categorias[k] = { nombre: c.nombre, icono: c.icono, orden: i, foto: FOTOS_CAT[k] ? `https://images.unsplash.com/photo-${FOTOS_CAT[k]}?auto=format&fit=crop&w=500&q=80` : "", franja: !!FOTOS_CAT[k] });
   (typeof PRODUCTOS_EJEMPLO !== "undefined" ? PRODUCTOS_EJEMPLO : []).forEach((p, i) => db.productos["p" + p.id] = { nombre: p.nombre, cat: p.cat, precio: p.precio, antes: p.antes, unidad: p.unidad, foto: p.foto, badge: p.badge || "", stock: p.stock ? [12, 4, 30, 18, 9, 25, 7, 40, 22, 35, 3, 15, 50, 60, 28, 20][i % 16] : 0, specs: p.specs || [], desc: p.desc || "", activo: true, orden: i });
+  const U = id => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=1100&q=80`;
+  db.fotos_prod = { p1: { fotos: [U("1504148455328-c376907d081c"), U("1572981779307-38b8cabb2407"), U("1530124566582-a618bc2615dc")] }, p2: { fotos: [U("1581147036324-c1c89c2c8b5c"), U("1617791160505-6f00504e3519")] } };
   if (window.FR_DEMO_PEDIDOS !== false) {
     const now = Date.now(), h = n => new Date(now - n * 3600e3).toISOString(), hoy = new Date().toISOString().slice(0, 10);
     db.pedidos["FR-DEMO01"] = { codigo: "FR-DEMO01", items: [{ id: "p1", n: "Taladro percutor 750W", precio: 349, cant: 1, unidad: "unidad" }, { id: "p6", n: "Alicate de corte 8\"", precio: 29.9, cant: 2, unidad: "unidad" }], subtotal: 408.8, envio: 0, total: 408.8,

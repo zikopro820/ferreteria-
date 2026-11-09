@@ -453,3 +453,23 @@ footer .logo-img { width: 48px; height: 44px; }
 .track .btn { justify-self: start; }
 @media (max-width: 640px) { .track-h { grid-template-columns: 1fr 1fr; } .pg-qr { grid-template-columns: 1fr; justify-items: center; text-align: center; } .pg-num { justify-content: center; } .track-f > div { flex-direction: column; } }
 [hidden] { display: none !important; }
+
+/* ---------- Galería del producto y «Comprar ahora» ---------- */
+.card .btn.buy { margin-top: 6px; }
+.pdp-buy { margin-bottom: 10px; padding: 15px; font-size: 1.05rem; }
+.pdp-gal { display: grid; gap: 10px; align-content: start; }
+.pdp-img { cursor: zoom-in; }
+.gal-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(21, 23, 28, .7); color: #fff; font-size: 1.6rem; line-height: 1; cursor: pointer; display: grid; place-items: center; }
+.gal-nav.prev { left: 10px; } .gal-nav.next { right: 10px; } .gal-nav:hover { background: var(--dark); color: var(--yellow); }
+.gal-count { position: absolute; right: 10px; bottom: 10px; z-index: 2; background: rgba(21, 23, 28, .75); color: #fff; font-size: .78rem; font-weight: 700; padding: 3px 9px; border-radius: 12px; }
+.pdp-thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.pdp-thumbs button { aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 2px solid var(--line); background: #eceef1; padding: 0; cursor: pointer; }
+.pdp-thumbs button.on { border-color: var(--yellow-dark); box-shadow: 0 0 0 2px var(--yellow); }
+.pdp-thumbs img { width: 100%; height: 100%; object-fit: cover; }
+.lightbox { position: fixed; inset: 0; z-index: 400; background: rgba(10, 11, 14, .94); display: grid; place-items: center; padding: 50px 14px; }
+.lightbox img { max-width: min(1100px, 100%); max-height: calc(100vh - 110px); object-fit: contain; border-radius: 10px; }
+.lb-x, .lb-p, .lb-n { position: fixed; border: none; width: 46px; height: 46px; border-radius: 50%; background: rgba(255, 255, 255, .14); color: #fff; font-size: 1.6rem; cursor: pointer; display: grid; place-items: center; }
+.lb-x { top: 14px; right: 14px; font-size: 1.2rem; } .lb-p { left: 14px; top: 50%; } .lb-n { right: 14px; top: 50%; }
+.lb-x:hover, .lb-p:hover, .lb-n:hover { background: var(--yellow); color: var(--dark); }
+.lb-c { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); color: #ddd; font-weight: 700; }
+@media (max-width: 640px) { .card .btn.buy { font-size: .8rem; padding: 10px 6px; } }

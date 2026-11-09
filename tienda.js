@@ -46,6 +46,10 @@ const DB = {
     if (DEMO) { const p = LDB.get().pedidos[c]; return p ? { ...p, codigo: c } : null; }
     const { fs, db } = await fb(), x = await fs.getDoc(fs.doc(db, "pedidos", c)); return x.exists() ? { ...x.data(), codigo: c } : null;
   },
+  async fotosProducto(id) {   // fotos extra (se cargan solo al abrir el producto)
+    try { if (DEMO) return ((LDB.get().fotos_prod || {})[id] || {}).fotos || [];
+      const { fs, db } = await fb(), x = await fs.getDoc(fs.doc(db, "fotos_prod", String(id))); return x.exists() ? x.data().fotos || [] : []; } catch (e) { return []; }
+  },
   async mensaje(m) {
     const id = codigo("MS");
     if (DEMO) { const d = LDB.get(); d.mensajes[id] = m; LDB.save(d); return id; }
