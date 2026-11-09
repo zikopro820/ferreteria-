@@ -21,6 +21,8 @@ const ICONOS = {
   ladder: '<path d="M7 2v20M17 2v20M7 6h10M7 11h10M7 16h10"/>',
   box:    '<path d="M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/>',
   ruler:  '<path d="M3 17L17 3l4 4L7 21zM7 13l2 2M10 10l2 2M13 7l2 2"/>',
+  down:   '<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',
+  recibo: '<path d="M5 2h14v20l-3-2-2 2-2-2-2 2-2-2-3 2zM9 7h6M9 11h6M9 15h4"/>',
   chev:   '<path d="M9 6l6 6-6 6"/>',
   cart:   '<path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 3H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/>',
   trash:  '<path d="M4 7h16M10 11v6M14 11v6M5 7l1 13h12l1-13M9 7V4h6v3"/>',
@@ -338,11 +340,13 @@ function paginaCarrito() {
       const b = $("#cBtn"); b.disabled = true; b.textContent = "Enviando…";
       try { await DB.crearPedido(pedido, pd.captura); } catch (er) { console.error(er); b.disabled = false; b.innerHTML = icon("check") + " Confirmar pedido"; return err("No se pudo enviar tu pedido. Revisa tu conexión e inténtalo otra vez."); }
       try { localStorage.setItem("ferre_ultimo", cod); } catch (e2) {}
+      MIS.add(cod); RECIBOS[cod] = pedido;
       saveCart([]);
       const msg = `Hola ${TIENDA()} 👋 Acabo de hacer el pedido *${cod}*\n\n${pedido.items.map(i => `• ${i.n} x${i.cant} = ${soles(i.precio * i.cant)}`).join("\n")}\n\nTOTAL: ${soles(pedido.total)}\nPago: ${pedido.pago}${pedido.banco ? " " + pedido.banco : ""}\nEntrega: ${ent === "domicilio" ? "Envío a " + pedido.direccion : "Recojo en tienda"}`;
       cartBox.innerHTML = `<div class="ok-box" id="okPedido">${icon("check")}<h2>¡Pedido recibido!</h2><p>Tu código es</p><div class="ok-code">${cod}</div>
         <p>${ce ? "Te confirmaremos por WhatsApp cuándo llega tu pedido." : "Estamos validando tu pago. Te avisaremos por WhatsApp apenas lo confirmemos."}</p>
-        <div class="ok-acts"><a class="btn btn-green" target="_blank" rel="noopener" href="${waLink(msg)}">Enviar mi pedido por WhatsApp</a><a class="btn btn-dark" href="pedido?c=${cod}">Seguir mi pedido</a><a class="btn btn-line" href="productos">Seguir comprando</a></div></div>`;
+        <div class="ok-acts"><a class="btn btn-green" target="_blank" rel="noopener" href="${waLink(msg)}">Enviar mi pedido por WhatsApp</a><button class="btn btn-yellow" type="button" data-recibo="${cod}">${icon("down")} Descargar recibo PDF</button><a class="btn btn-dark" href="pedido?c=${cod}">Seguir mi pedido</a><a class="btn btn-line" href="mis-compras">Mis compras</a><a class="btn btn-line" href="productos">Seguir comprando</a></div>
+        <p class="note">Tu compra quedó guardada en <a href="mis-compras"><b>Mis compras</b></a> de este celular.</p></div>`;
       scrollTo({ top: 0, behavior: "smooth" });
     });
   };
@@ -370,11 +374,135 @@ function paginaPedido() {
       ${malo ? `<div class="track-bad">Este pedido fue ${p.estado === "rechazado" ? "rechazado porque no pudimos validar el pago" : "anulado"}${p.motivo ? ": " + esc(p.motivo) : ""}. Escríbenos por WhatsApp para ayudarte.</div>`
       : `<ol class="steps">${pasos.map(([k, t, ic]) => { const i = PASOS.findIndex(x => x[0] === k), est = i < idx ? "done" : i === idx ? "now" : ""; return `<li class="${est}">${icon(ic)}<span>${p.entrega === "recojo" && k === "enviado" ? "Listo para recoger" : t}</span></li>`; }).join("")}</ol>`}
       <div class="track-items">${p.items.map(i => `<div><span>${i.cant} × ${esc(i.n)}</span><b>${soles(i.precio * i.cant)}</b></div>`).join("")}${p.envio ? `<div><span>Envío (${esc(p.zona || "")})</span><b>${soles(p.envio)}</b></div>` : ""}</div>
-      <a class="btn btn-green" target="_blank" rel="noopener" href="${waLink(`Hola ${TIENDA()} 👋 Consulto por mi pedido ${p.codigo}`)}">Consultar por WhatsApp</a></div>`;
+      ${p.boleta ? `<p class="mc-bol">🧾 ${esc(p.comprobante || "Boleta")} electrónica: <b>${esc(p.boleta)}</b></p>` : ""}
+      <div class="track-acts"><button class="btn btn-yellow" type="button" data-recibo="${esc(p.codigo)}">${icon("down")} Descargar recibo PDF</button>
+      <a class="btn btn-green" target="_blank" rel="noopener" href="${waLink(`Hola ${TIENDA()} 👋 Consulto por mi pedido ${p.codigo}`)}">Consultar por WhatsApp</a></div></div>`;
+    RECIBOS[p.codigo] = p; MIS.add(p.codigo);
     history.replaceState(null, "", "?c=" + p.codigo);
   }
   $("#tf").addEventListener("submit", e => { e.preventDefault(); ver($("#tc").value); });
   if (c0) ver(c0);
+}
+
+/* ---------- Mis compras: códigos guardados en este celular ---------- */
+const MIS = {
+  get() { try { const l = JSON.parse(localStorage.getItem("ferre_compras")); return Array.isArray(l) ? l : []; } catch (e) { return []; } },
+  guardar(l) { try { localStorage.setItem("ferre_compras", JSON.stringify(l.slice(0, 60))); } catch (e) {} },
+  add(c) { c = String(c || "").trim().toUpperCase(); if (!c) return; const l = MIS.get(); if (!l.includes(c)) { l.unshift(c); MIS.guardar(l); } },
+  del(c) { MIS.guardar(MIS.get().filter(x => x !== c)); }
+};
+const RECIBOS = {};
+const EST_TXT = { "por-validar": "Pago en revisión", nuevo: "Confirmado", preparando: "Preparando", enviado: "En camino", entregado: "Entregado", anulado: "Anulado", rechazado: "Rechazado" };
+const fechaPE = (s, hora = true) => { const d = new Date(s); if (isNaN(d)) return ""; return d.toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric" }) + (hora ? " " + d.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" }) : ""); };
+const entregaTxt = p => p.entrega === "recojo" ? "Recojo en tienda" : p.entrega === "tienda" ? "Compra en tienda" : "Envío a domicilio";
+
+function imgData(src) {   // convierte el logo en imagen para el PDF (si se puede)
+  return new Promise(ok => {
+    if (!src) return ok(null); const im = new Image(); let listo = false; const fin = v => { if (!listo) { listo = true; ok(v); } };
+    if (!src.startsWith("data:")) im.crossOrigin = "anonymous";
+    im.onload = () => { try { const k = Math.min(1, 400 / im.naturalWidth), c = document.createElement("canvas"); c.width = im.naturalWidth * k || 200; c.height = im.naturalHeight * k || 200; const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height); fin({ d: c.toDataURL("image/jpeg", .9), w: c.width, h: c.height }); } catch (e) { fin(null); } };
+    im.onerror = () => fin(null); setTimeout(() => fin(null), 6000); im.src = src;
+  });
+}
+
+async function pdfRecibo(p) {
+  await cargarScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+  const doc = new window.jspdf.jsPDF({ unit: "mm", format: "a5" }), W = 148, H = 210, M = 10, S = n => "S/ " + (+n || 0).toFixed(2);
+  const T = (t, x, y, o) => doc.text(String(t ?? ""), x, y, o), F = (b, z, c = 20) => { doc.setFont("helvetica", b ? "bold" : "normal"); doc.setFontSize(z); doc.setTextColor(c); };
+  doc.setFillColor(255, 200, 26); doc.rect(0, 0, W, 4, "F");
+  let y = 12, tx = M;
+  const lg = await imgData(AJ.logo);
+  if (lg) { const h = 15, w = Math.min(32, h * lg.w / lg.h); doc.addImage(lg.d, "JPEG", M, y - 4, w, h); tx = M + w + 3; }
+  F(1, 12); T(doc.splitTextToSize(TIENDA(), 80 - (tx - M))[0], tx, y);
+  F(0, 7.5, 90);
+  [AJ.ruc ? "RUC " + AJ.ruc : "", AJ.direccion, [AJ.telefono || AJ.whatsapp, AJ.email].filter(Boolean).join(" · ")].filter(Boolean)
+    .forEach((l, i) => T(doc.splitTextToSize(String(l), 84 - (tx - M))[0], tx, y + 4.5 + i * 3.6));
+  const bx = W - M - 44; doc.setDrawColor(20); doc.setLineWidth(.4); doc.roundedRect(bx, y - 5, 44, 23, 2, 2);
+  F(1, 8.5); T("RECIBO DE COMPRA", bx + 22, y, { align: "center" });
+  F(1, 11); T(p.codigo, bx + 22, y + 6.5, { align: "center" });
+  F(0, 7, 70); T(fechaPE(p.creado), bx + 22, y + 11.5, { align: "center" }); T("Estado: " + (EST_TXT[p.estado] || p.estado || ""), bx + 22, y + 15.5, { align: "center" });
+  y = 36;
+  // cliente y entrega
+  doc.setFillColor(246, 246, 246); doc.roundedRect(M, y, W - 2 * M, 22, 1.5, 1.5, "F");
+  F(1, 7, 120); T("CLIENTE", M + 3, y + 4.5); T("ENTREGA", M + 68, y + 4.5);
+  F(1, 8.5); T(doc.splitTextToSize(p.nombre || "Cliente", 60)[0], M + 3, y + 9);
+  F(0, 7.5, 60); T((p.comprobante || "Boleta") + (p.doc ? " · " + (String(p.doc).length === 11 ? "RUC " : "DNI ") + p.doc : ""), M + 3, y + 13); T(p.celular ? "Cel. " + p.celular : "", M + 3, y + 17);
+  F(1, 8.5); T(entregaTxt(p), M + 68, y + 9);
+  F(0, 7.5, 60); doc.splitTextToSize(p.entrega === "domicilio" ? [p.direccion, p.zona].filter(Boolean).join(" · ") : p.entrega === "recojo" ? (AJ.direccion || "") : "", 58).slice(0, 2).forEach((l, i) => T(l, M + 68, y + 13 + i * 3.6));
+  y += 26;
+  if (p.boleta) { doc.setDrawColor(255, 200, 26); doc.setLineWidth(.6); doc.roundedRect(M, y, W - 2 * M, 8, 1.5, 1.5); F(1, 8.5); T(`${p.comprobante || "Boleta"} electrónica N° ${p.boleta}`, W / 2, y + 5.3, { align: "center" }); y += 12; }
+  // tabla
+  const col = [M, M + 14, W - M - 42, W - M]; 
+  const cab = () => { doc.setFillColor(25, 25, 25); doc.rect(M, y, W - 2 * M, 7, "F"); F(1, 7.5, 255); T("CANT.", col[0] + 2, y + 4.8); T("DESCRIPCIÓN", col[1] + 1, y + 4.8); T("P. UNIT.", col[2] + 18, y + 4.8, { align: "right" }); T("IMPORTE", col[3] - 2, y + 4.8, { align: "right" }); y += 7; };
+  cab();
+  (p.items || []).forEach((it, i) => {
+    const desc = doc.splitTextToSize(it.n + (it.unidad && it.unidad !== "unidad" ? ` (${it.unidad})` : ""), col[2] - col[1] - 2), h = Math.max(6.5, desc.length * 3.6 + 3);
+    if (y + h > H - 50) { doc.addPage(); y = 14; cab(); }
+    if (i % 2) { doc.setFillColor(250, 250, 250); doc.rect(M, y, W - 2 * M, h, "F"); }
+    F(0, 8); T(it.cant, col[0] + 5, y + 4.4, { align: "center" }); desc.forEach((l, k) => T(l, col[1] + 1, y + 4.4 + k * 3.6));
+    T(S(it.precio), col[2] + 18, y + 4.4, { align: "right" }); F(1, 8); T(S(it.precio * it.cant), col[3] - 2, y + 4.4, { align: "right" });
+    y += h;
+  });
+  doc.setDrawColor(200); doc.setLineWidth(.2); doc.line(M, y, W - M, y); y += 5;
+  // totales
+  const tot = [["Subtotal", p.subtotal ?? p.total], ...(p.envio ? [["Envío" + (p.zona ? " (" + p.zona + ")" : ""), p.envio]] : [])];
+  tot.forEach(([k, v]) => { F(0, 8, 70); T(k, W - M - 32, y, { align: "right" }); T(S(v), W - M - 2, y, { align: "right" }); y += 4.5; });
+  doc.setFillColor(255, 200, 26); doc.roundedRect(W - M - 58, y - 1.5, 58, 8, 1.5, 1.5, "F"); F(1, 10); T("TOTAL", W - M - 32, y + 4, { align: "right" }); T(S(p.total), W - M - 2, y + 4, { align: "right" });
+  // pago
+  F(1, 7, 120); T("PAGO", M, y - 4.5); F(0, 8, 40);
+  T(`${p.pago || ""}${p.banco ? " · " + p.banco : ""}`, M, y); if (p.operacion) T("Operación: " + p.operacion, M, y + 4);
+  F(0, 7.5, 60); T(["por-validar", "rechazado", "anulado"].includes(p.estado) ? "" : p.pago === "Contra entrega" && !p.pagado ? "Se paga al recibir" : "Pagado", M, y + 8);
+  y += 16;
+  // QR + pie
+  if (y > H - 38) { doc.addPage(); y = 14; }
+  try { const q = await qrCanvas(new URL("pedido?c=" + p.codigo, location.href).href, 220, "#111"); doc.addImage(q.toDataURL(), "PNG", M, y, 24, 24); } catch (e) {}
+  F(1, 8.5); T("¡Gracias por tu compra!", M + 28, y + 5);
+  F(0, 7.5, 70); doc.splitTextToSize("Escanea el código QR para ver el estado de tu pedido en línea. Guarda este recibo junto con tu código " + p.codigo + ".", W - 2 * M - 28).forEach((l, i) => T(l, M + 28, y + 9.5 + i * 3.6));
+  doc.setDrawColor(220); doc.line(M, H - 14, W - M, H - 14);
+  F(1, 7, 90); T("Este recibo no reemplaza la boleta o factura electrónica.", W / 2, H - 9.5, { align: "center" });
+  F(0, 6.5, 140); T("Documento generado por " + TIENDA() + " · " + fechaPE(new Date().toISOString()), W / 2, H - 6, { align: "center" });
+  doc.save(`Recibo-${p.codigo}.pdf`);
+}
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-recibo]"); if (!b) return;
+  const c = b.dataset.recibo, html = b.innerHTML; b.disabled = true; b.textContent = "Generando PDF…";
+  try { const p = RECIBOS[c] || await DB.pedido(c); if (!p) throw new Error("no existe"); await pdfRecibo(p); }
+  catch (er) { console.error(er); toast("No se pudo generar el recibo. Revisa tu conexión.", true); }
+  b.disabled = false; b.innerHTML = html;
+});
+
+function paginaMisCompras() {
+  const box = $("#comprasBox"); if (!box) return;
+  try { const u = localStorage.getItem("ferre_ultimo"); if (u) MIS.add(u); } catch (e) {}
+  box.innerHTML = `<div id="mcList" aria-live="polite"></div>
+    <form class="track-f mc-add" id="mcF"><label for="mcC">¿Compraste desde otro celular o computadora? Agrega el código de tu pedido</label>
+      <div><input id="mcC" placeholder="FR-XXXXXX" maxlength="12" style="text-transform:uppercase"><button class="btn btn-yellow">Agregar</button></div><p class="f-err" id="mcErr"></p></form>`;
+  async function pintar() {
+    const L = $("#mcList"), cods = MIS.get();
+    if (!cods.length) { L.innerHTML = `<div class="empty"><h3>Aún no tienes compras en este celular</h3><p>Cuando compres en la web, tus pedidos y recibos aparecerán aquí.</p><a class="btn btn-yellow" href="productos">Ver productos</a></div>`; return; }
+    L.innerHTML = `<p class="note">Cargando tus compras…</p>`;
+    const ps = await Promise.all(cods.map(c => RECIBOS[c] ? Promise.resolve(RECIBOS[c]) : DB.pedido(c).catch(() => null)));
+    ps.forEach(p => p && (RECIBOS[p.codigo] = p));
+    const ok = ps.filter(Boolean).sort((a, b) => String(b.creado || "").localeCompare(String(a.creado || ""))), faltan = cods.filter((c, i) => !ps[i]);
+    const validas = ok.filter(p => !["anulado", "rechazado"].includes(p.estado)), gasto = validas.reduce((a, p) => a + (+p.total || 0), 0);
+    L.innerHTML = `<div class="mc-sum"><div><small>Compras</small><b>${ok.length}</b></div><div><small>Total comprado</small><b>${soles(gasto)}</b></div><div><small>Última compra</small><b>${ok[0] ? fechaPE(ok[0].creado, false) : "—"}</b></div></div>
+      ${ok.map(p => `<article class="mc-card panel">
+        <div class="mc-h"><div><small>Pedido</small><b>${esc(p.codigo)}</b><span>${fechaPE(p.creado)}</span></div><span class="mc-est e-${esc(p.estado)}">${esc(EST_TXT[p.estado] || p.estado)}</span></div>
+        <div class="track-items">${(p.items || []).map(i => `<div><span>${i.cant} × ${esc(i.n)}</span><b>${soles(i.precio * i.cant)}</b></div>`).join("")}${p.envio ? `<div><span>Envío</span><b>${soles(p.envio)}</b></div>` : ""}</div>
+        <div class="mc-tot"><span>${esc(p.pago || "")}${p.banco ? " · " + esc(p.banco) : ""} · ${entregaTxt(p)}</span><b>${soles(p.total)}</b></div>
+        ${p.boleta ? `<p class="mc-bol">🧾 ${esc(p.comprobante || "Boleta")} electrónica: <b>${esc(p.boleta)}</b></p>` : ""}
+        <div class="mc-acts"><button class="btn btn-yellow" type="button" data-recibo="${esc(p.codigo)}">${icon("down")} Descargar recibo PDF</button><a class="btn btn-dark" href="pedido?c=${encodeURIComponent(p.codigo)}">Ver seguimiento</a><button class="btn btn-line" type="button" data-quitar="${esc(p.codigo)}">Quitar</button></div>
+      </article>`).join("")}
+      ${faltan.length ? `<p class="note">No encontramos: ${faltan.map(c => `<b>${esc(c)}</b> <button class="lnk" data-quitar="${esc(c)}">quitar</button>`).join(", ")}</p>` : ""}`;
+  }
+  box.addEventListener("click", e => { const q = e.target.closest("[data-quitar]"); if (q) { MIS.del(q.dataset.quitar); toast("Quitado de tu lista (el pedido sigue existiendo).", true); pintar(); } });
+  $("#mcF").addEventListener("submit", async e => {
+    e.preventDefault(); const c = $("#mcC").value.trim().toUpperCase(), er = $("#mcErr"); er.textContent = ""; if (!c) return;
+    let p = null; try { p = await DB.pedido(c); } catch (x) {}
+    if (!p) { er.textContent = "No encontramos ese código. Revísalo e inténtalo otra vez."; return; }
+    RECIBOS[p.codigo] = p; MIS.add(p.codigo); $("#mcC").value = ""; toast("✓ Compra agregada", true); pintar();
+  });
+  pintar();
 }
 
 /* ---------- Contacto: guarda la consulta en el panel y abre WhatsApp ---------- */
@@ -404,5 +532,5 @@ $$(".year").forEach(el => el.textContent = new Date().getFullYear());
   AJ = c.aj || {};
   c.cats.sort((a, b) => (a.orden ?? 99) - (b.orden ?? 99)).forEach(x => CATEGORIAS[x.id] = x);
   PRODUCTOS = c.prods.filter(p => p.activo !== false).sort((a, b) => (a.orden ?? 999) - (b.orden ?? 999));
-  aplicarMarca(); paginas(); paginaCarrito(); paginaPedido(); paginaContacto(); refreshCartUI();
+  aplicarMarca(); paginas(); paginaCarrito(); paginaPedido(); paginaMisCompras(); paginaContacto(); refreshCartUI();
 })();

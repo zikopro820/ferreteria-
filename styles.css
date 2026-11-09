@@ -473,3 +473,20 @@ footer .logo-img { width: 48px; height: 44px; }
 .lb-x:hover, .lb-p:hover, .lb-n:hover { background: var(--yellow); color: var(--dark); }
 .lb-c { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); color: #ddd; font-weight: 700; }
 @media (max-width: 640px) { .card .btn.buy { font-size: .8rem; padding: 10px 6px; } }
+
+/* ---------- Recibo y Mis compras ---------- */
+.track-acts, .mc-acts { display: flex; gap: 10px; flex-wrap: wrap; }
+.mc-bol { margin: 0; padding: 10px 14px; border: 2px solid var(--yellow, #ffc81a); border-radius: 10px; font-size: .95rem; }
+.mc-sum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+.mc-sum div { background: #111; color: #fff; border-radius: 12px; padding: 14px 16px; }
+.mc-sum small { display: block; color: #bbb; font-size: .8rem; } .mc-sum b { font-size: 1.25rem; color: var(--yellow, #ffc81a); }
+.mc-card { display: grid; gap: 14px; margin-bottom: 16px; }
+.mc-h { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.mc-h small { display: block; color: var(--muted); font-size: .8rem; } .mc-h b { font-size: 1.15rem; letter-spacing: .5px; display: block; } .mc-h span:not(.mc-est) { color: var(--muted); font-size: .85rem; }
+.mc-est { padding: 5px 12px; border-radius: 99px; font-size: .8rem; font-weight: 700; background: #eee; white-space: nowrap; }
+.mc-est.e-por-validar { background: #fff4d1; color: #8a6200; } .mc-est.e-nuevo, .mc-est.e-preparando { background: #e3efff; color: #1e4fa3; }
+.mc-est.e-enviado { background: #efe4ff; color: #5b2aa8; } .mc-est.e-entregado { background: #dcf5e4; color: #157a3a; } .mc-est.e-anulado, .mc-est.e-rechazado { background: #fde2e2; color: #b42318; }
+.mc-tot { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; } .mc-tot span { color: var(--muted); font-size: .9rem; } .mc-tot b { font-size: 1.3rem; }
+.mc-add { margin-top: 26px; padding-top: 20px; border-top: 1px dashed var(--line); }
+.lnk { background: none; border: 0; color: #b42318; text-decoration: underline; cursor: pointer; font: inherit; padding: 0; }
+@media (max-width: 640px) { .mc-sum { grid-template-columns: 1fr 1fr; } .mc-sum div:last-child { grid-column: 1 / -1; } .mc-acts .btn, .track-acts .btn { flex: 1 1 100%; } }
