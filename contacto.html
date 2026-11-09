@@ -14,7 +14,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script src="firebase-config.js" defer></script>
   <script src="productos.js" defer></script>
+  <script src="semilla.js" defer></script>
+  <script src="tienda.js" defer></script>
   <script src="script.js" defer></script>
 </head>
 <body>
@@ -49,6 +52,7 @@
         <li><a href="productos?nuevos=1"><svg class="ico" viewBox="0 0 24 24"><path d="M12 2v6M12 16v6M2 12h6M16 12h6M5 5l3 3M16 16l3 3M5 19l3-3M16 8l3-3"/></svg>Novedades</a></li>
         <li><a href="nosotros"><svg class="ico" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M1 21a8 8 0 0 1 16 0M17 4a4 4 0 0 1 0 8M23 21a8 8 0 0 0-5-7.4"/></svg>Nosotros</a></li>
         <li><a href="contacto" class="active"><svg class="ico" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>Contacto</a></li>
+        <li><a href="pedido"><svg class="ico" viewBox="0 0 24 24"><path d="M1 4h14v12H1zM15 8h4l3 3v5h-7"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/></svg>Mi pedido</a></li>
       </ul>
     </div>
   </nav>
@@ -64,12 +68,12 @@
   <div class="container two-col">
     <div class="panel">
       <div class="info-card"><i><svg class="ico" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg></i><div><strong>WhatsApp</strong><span><a class="wa-link" href="#">+51 987 654 321</a></span></div></div>
-      <div class="info-card"><i><svg class="ico" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg></i><div><strong>Correo</strong><span>ventas@tuferreteria.com</span></div></div>
-      <div class="info-card"><i><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></i><div><strong>Horario</strong><span>Lunes a sábado, 8:00 a.m. – 7:00 p.m.</span></div></div>
-      <div class="info-card"><i><svg class="ico" viewBox="0 0 24 24"><path d="M12 22s8-7.6 8-13a8 8 0 0 0-16 0c0 5.4 8 13 8 13z"/><circle cx="12" cy="9" r="3"/></svg></i><div><strong>Dirección</strong><span>Av. Principal 123, Lima, Perú</span></div></div>
+      <div class="info-card"><i><svg class="ico" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg></i><div><strong>Correo</strong><span id="cEmail">ventas@tuferreteria.com</span></div></div>
+      <div class="info-card"><i><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></i><div><strong>Horario</strong><span id="cHorario">Lunes a sábado, 8:00 a.m. – 7:00 p.m.</span></div></div>
+      <div class="info-card"><i><svg class="ico" viewBox="0 0 24 24"><path d="M12 22s8-7.6 8-13a8 8 0 0 0-16 0c0 5.4 8 13 8 13z"/><circle cx="12" cy="9" r="3"/></svg></i><div><strong>Dirección</strong><span id="cDir">Av. Principal 123, Lima, Perú</span></div></div>
       <div class="map">
         <!-- Cambia "Lima,Peru" por la dirección real de la ferretería -->
-        <iframe src="https://www.google.com/maps?q=Lima,Peru&output=embed" loading="lazy" title="Ubicación de la ferretería"></iframe>
+        <iframe id="cMap" src="https://www.google.com/maps?q=Lima,Peru&output=embed" loading="lazy" title="Ubicación de la ferretería"></iframe>
       </div>
     </div>
     <div class="panel">
@@ -82,7 +86,7 @@
         <label for="fAsunto">Asunto</label>
         <select id="fAsunto"><option>Consulta de producto</option><option>Cotización para obra</option><option>Compra por mayor / empresa</option><option>Estado de mi pedido</option><option>Garantía</option></select>
         <label for="fMensaje">Mensaje *</label><textarea id="fMensaje" required placeholder="Escribe los productos y cantidades que necesitas..."></textarea>
-        <button class="btn btn-yellow btn-block" type="submit">Enviar por WhatsApp</button>
+        <button class="btn btn-yellow btn-block" type="submit">Enviar consulta</button>
       </form>
       <h2 style="font-size:1.4rem;margin:30px 0 6px" id="faq">Preguntas frecuentes</h2>
       <div class="faq">
@@ -109,6 +113,7 @@
         <a href="terminos">Términos y condiciones</a>
         <a href="privacidad">Política de privacidad</a>
         <a href="contacto">Contacto</a>
+        <a href="pedido">Seguir mi pedido</a>
       </div>
       <div class="foot-right">
         <div class="socials">

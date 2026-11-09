@@ -14,7 +14,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script src="firebase-config.js" defer></script>
   <script src="productos.js" defer></script>
+  <script src="semilla.js" defer></script>
+  <script src="tienda.js" defer></script>
   <script src="script.js" defer></script>
 </head>
 <body>
@@ -49,6 +52,7 @@
         <li><a href="productos?nuevos=1"><svg class="ico" viewBox="0 0 24 24"><path d="M12 2v6M12 16v6M2 12h6M16 12h6M5 5l3 3M16 16l3 3M5 19l3-3M16 8l3-3"/></svg>Novedades</a></li>
         <li><a href="nosotros" class="active"><svg class="ico" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M1 21a8 8 0 0 1 16 0M17 4a4 4 0 0 1 0 8M23 21a8 8 0 0 0-5-7.4"/></svg>Nosotros</a></li>
         <li><a href="contacto"><svg class="ico" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>Contacto</a></li>
+        <li><a href="pedido"><svg class="ico" viewBox="0 0 24 24"><path d="M1 4h14v12H1zM15 8h4l3 3v5h-7"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/></svg>Mi pedido</a></li>
       </ul>
     </div>
   </nav>
@@ -63,14 +67,14 @@
 
   <div class="container" style="padding-top:20px">
     <div class="panel about">
-      <div class="about-img"><img src="https://images.unsplash.com/photo-1671040690726-b78261eff126?auto=format&fit=crop&w=900&q=80" alt="Herramientas colgadas en la pared de la ferretería" loading="lazy" onerror="this.style.display='none'"></div>
+      <div class="about-img"><img id="nosFoto" src="https://images.unsplash.com/photo-1671040690726-b78261eff126?auto=format&fit=crop&w=900&q=80" alt="Herramientas colgadas en la pared de la ferretería" loading="lazy" onerror="this.style.display='none'"></div>
       <div>
         <!-- Cambia este texto por la historia real de la ferretería -->
-        <h2>Construye tus proyectos con confianza</h2>
-        <p>En Ferretería Ronald te ofrecemos herramientas, materiales de construcción y todo lo necesario para tu obra, taller u hogar, con precios justos y atención personalizada.</p>
-        <p>Asesoramos a maestros de obra, contratistas, empresas y familias para que elijan el producto correcto y ahorren tiempo y dinero.</p>
+        <h2 id="nosTit">Construye tus proyectos con confianza</h2>
+        <p id="nosP1">En Ferretería Ronald te ofrecemos herramientas, materiales de construcción y todo lo necesario para tu obra, taller u hogar, con precios justos y atención personalizada.</p>
+        <p id="nosP2">Asesoramos a maestros de obra, contratistas, empresas y familias para que elijan el producto correcto y ahorren tiempo y dinero.</p>
         <div class="stats">
-          <div><strong>7</strong><span>Categorías</span></div>
+          <div><strong id="nosCats">7</strong><span>Categorías</span></div>
           <div><strong>Lun–Sáb</strong><span>Atención</span></div>
           <div><strong>Delivery</strong><span>Zona local</span></div>
         </div>
@@ -97,6 +101,7 @@
         <a href="terminos">Términos y condiciones</a>
         <a href="privacidad">Política de privacidad</a>
         <a href="contacto">Contacto</a>
+        <a href="pedido">Seguir mi pedido</a>
       </div>
       <div class="foot-right">
         <div class="socials">

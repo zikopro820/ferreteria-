@@ -1,7 +1,8 @@
 /* =========================================================
-   FERRETERÍA RONALD — LISTA DE PRODUCTOS
-   Aquí agregas, quitas o cambias productos. Cada producto
-   aparece solo en la tienda, en su página y en el carrito.
+   FERRETERÍA RONALD — PRODUCTOS DE EJEMPLO
+   ⚠️ Ya NO se editan aquí: ahora se agregan, cambian y quitan
+   desde el PANEL (Productos y Categorías). Esta lista solo se
+   usa como ejemplo y para «Cargar ejemplos» la primera vez.
 
    Campos:
    id       → número único (no repetir)
@@ -18,7 +19,7 @@
    ========================================================= */
 const FOTO = id => "https://images.unsplash.com/photo-" + id + "?auto=format&fit=crop&w=600&q=80";
 
-const CATEGORIAS = {
+const CATEGORIAS_EJEMPLO = {
   manuales:    { nombre: "Herramientas Manuales",  icono: "wrench" },
   electricas:  { nombre: "Herramientas Eléctricas", icono: "drill" },
   construccion:{ nombre: "Construcción",           icono: "brick" },
@@ -28,7 +29,7 @@ const CATEGORIAS = {
   seguridad:   { nombre: "Seguridad Industrial",   icono: "helmet" }
 };
 
-const PRODUCTOS = [
+const PRODUCTOS_EJEMPLO = [
   { id: 1, nombre: "Taladro percutor 750W", cat: "electricas", precio: 349.00, antes: null, unidad: "unidad",
     foto: FOTO("1562259929-b4e1fd3aef09"), badge: "Más vendido", stock: true,
     specs: ["Potencia: 750 W", "Mandril de 13 mm", "Función percutor para concreto", "Incluye maletín"],
